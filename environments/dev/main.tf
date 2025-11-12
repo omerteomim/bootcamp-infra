@@ -28,6 +28,21 @@ module "eso-irsa" {
     depends_on = [ module.eks ] 
 }
 
+module "alb" {
+    source = "../../modules/alb"
+    environment = var.environment
+    cluster_name = module.eks.cluster_name
+    vpc_id = module.vpc.vpc_id
+    oidc_provider_arn = module.eks.oidc_provider_arn
+    depends_on = [ module.eks ]
+}
+
+module "monitoring" {
+    source = "../../modules/monitoring"
+    grafana_admin_password = var.grafana_admin_password
+    depends_on = [ module.eks, module.alb ]
+}
+
 module "external-secrets" {
     source = "../../modules/externalsecrets"
     external_secrets_namespace = var.external_secrets_namespace
@@ -45,19 +60,3 @@ module "argocd" {
     argocd_controller_replicas = var.argocd_controller_replicas
     depends_on = [ module.eks, module.alb]
 }
-
-module "alb" {
-    source = "../../modules/alb"
-    environment = var.environment
-    cluster_name = module.eks.cluster_name
-    vpc_id = module.vpc.vpc_id
-    oidc_provider_arn = module.eks.oidc_provider_arn
-    depends_on = [ module.eks ]
-}
-
-# module "monitoring" {
-#     source = "../../modules/monitoring"
-#     grafana_admin_password = var.grafana_admin_password
-#     depends_on = [ module.eks ]
-# }
-
